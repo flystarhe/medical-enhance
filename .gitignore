@@ -1,0 +1,9 @@
+/.idea/
+/**/tmps/
+/**/.cache/
+/**/__pycache__/
+/**/.ipynb_checkpoints/
+/**/.DS_Store
+/**/*.pyc
+/**/*.log
+/data/
