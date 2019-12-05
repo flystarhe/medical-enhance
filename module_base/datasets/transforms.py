@@ -50,9 +50,9 @@ class RandomCrop(object):
         data = results['data']
 
         assert 0 < self.crop_size <= min(data.shape)
-        crop_y0 = np.random.randint(0, data.shape[0] - self.crop_size + 1)
-        crop_x0 = np.random.randint(0, data.shape[1] - self.crop_size + 1)
-        patch = np.array([crop_x0, crop_y0, crop_x0 + self.crop_size, crop_y0 + self.crop_size])
+        crop_y = np.random.randint(0, data.shape[0] - self.crop_size + 1)
+        crop_x = np.random.randint(0, data.shape[1] - self.crop_size + 1)
+        patch = np.array([crop_x, crop_y, crop_x + self.crop_size, crop_y + self.crop_size])
 
         # crop the image
         data = data[patch[1]:patch[3], patch[0]:patch[2]]
@@ -69,6 +69,7 @@ class RandomCrop(object):
             valid_inds = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
             if not np.any(valid_inds):
                 return None
+
             results['boxes'] = boxes[valid_inds, :]
 
         # adjust masks
@@ -141,7 +142,7 @@ class Pad(object):
         pad_data = np.empty(new_shape, dtype=data.dtype)
         pad_data[...] = self.fill_value
 
-        pad_data[:data.shape[0], :data.shape[1], ...] = data
+        pad_data[:data.shape[0], :data.shape[1]] = data
         results['data'] = pad_data
         results['pad_shape'] = pad_data.shape
 
