@@ -23,11 +23,11 @@ class LoadDicomFromFile(object):
             filename = results['filename']
 
         itk_img = sitk.ReadImage(filename, sitk.sitkFloat32)
-        data = sitk.GetArrayFromImage(itk_img)[0]  # (height, width)
+        input_data = sitk.GetArrayFromImage(itk_img)[0]  # (height, width)
 
         results['filename'] = filename
-        results['data'] = data
-        results['ori_shape'] = data.shape
+        results['input'] = input_data
+        results['ori_shape'] = input_data.shape
 
         return results
 

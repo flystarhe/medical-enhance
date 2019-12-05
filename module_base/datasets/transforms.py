@@ -16,17 +16,17 @@ class RandomCrop(object):
         self.crop_size = crop_size
 
     def __call__(self, results):
-        data = results['data']
+        input_data = results['input']
 
-        assert 0 < self.crop_size <= min(data.shape)
-        crop_y = np.random.randint(0, data.shape[0] - self.crop_size + 1)
-        crop_x = np.random.randint(0, data.shape[1] - self.crop_size + 1)
+        assert 0 < self.crop_size <= min(input_data.shape)
+        crop_y = np.random.randint(0, input_data.shape[0] - self.crop_size + 1)
+        crop_x = np.random.randint(0, input_data.shape[1] - self.crop_size + 1)
         patch = np.array([crop_x, crop_y, crop_x + self.crop_size, crop_y + self.crop_size])
 
         # crop the image
-        data = data[patch[1]:patch[3], patch[0]:patch[2]]
-        results['data'] = data
-        results['ori_shape'] = data.shape
+        input_data = input_data[patch[1]:patch[3], patch[0]:patch[2]]
+        results['input'] = input_data
+        results['ori_shape'] = input_data.shape
 
         # adjust boxes
         if 'boxes' in results:
@@ -61,14 +61,14 @@ class NormalizeCustomize(object):
         self.eps = eps
 
     def __call__(self, results):
-        data = results['data']
+        input_data = results['input']
 
-        a, b = data.min(), data.max()
+        a, b = input_data.min(), input_data.max()
         mean = (a + b) / 2
         std = (b - a) / 2
 
-        data = (data - mean) / (std + self.eps)
-        results['data'] = data
+        input_data = (input_data - mean) / (std + self.eps)
+        results['input'] = input_data
 
         return results
 
@@ -83,13 +83,13 @@ class NormalizeInstance(object):
         self.eps = eps
 
     def __call__(self, results):
-        data = results['data']
+        input_data = results['input']
 
-        mean = data.mean()
-        std = data.std()
+        mean = input_data.mean()
+        std = input_data.std()
 
-        data = (data - mean) / (std + self.eps)
-        results['data'] = data
+        input_data = (input_data - mean) / (std + self.eps)
+        results['input'] = input_data
 
         return results
 
@@ -105,14 +105,14 @@ class Pad(object):
         self.fill_value = fill_value
 
     def __call__(self, results):
-        data = results['data']
+        input_data = results['input']
 
-        new_shape = tuple(int(np.ceil(v / self.size_divisor)) * self.size_divisor for v in data.shape)
-        pad_data = np.empty(new_shape, dtype=data.dtype)
+        new_shape = tuple(int(np.ceil(v / self.size_divisor)) * self.size_divisor for v in input_data.shape)
+        pad_data = np.empty(new_shape, dtype=input_data.dtype)
         pad_data[...] = self.fill_value
 
-        pad_data[:data.shape[0], :data.shape[1]] = data
-        results['data'] = pad_data
+        pad_data[:input_data.shape[0], :input_data.shape[1]] = input_data
+        results['input'] = pad_data
         results['pad_shape'] = pad_data.shape
 
         return results
