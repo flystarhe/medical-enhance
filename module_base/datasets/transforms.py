@@ -2,6 +2,13 @@ import torch
 import numpy as np
 from .registry import PIPELINES
 
+'''
+sitk image: (width, height, depth)
+sitk ndarray: (depth, height, width)
+numpy ndarray: (height, width, channel)
+torch tensor shape: (channel, height, width)
+'''
+
 
 def to_tensor(data):
     if isinstance(data, torch.Tensor):
@@ -33,6 +40,7 @@ class ToTensor(object):
         return self.__class__.__name__ + '(keys={})'.format(self.keys)
 
 
+@PIPELINES.register_module
 class RandomCrop(object):
 
     def __init__(self, crop_size):
@@ -49,6 +57,7 @@ class RandomCrop(object):
         # crop the image
         data = data[patch[1]:patch[3], patch[0]:patch[2]]
         results['data'] = data
+        results['ori_shape'] = data.shape
 
         # adjust boxes
         if 'boxes' in results:
@@ -73,3 +82,70 @@ class RandomCrop(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(crop_size={})'.format(self.crop_size)
+
+
+@PIPELINES.register_module
+class NormalizeCustomize(object):
+
+    def __init__(self, eps=0.):
+        self.eps = eps
+
+    def __call__(self, results):
+        data = results['data']
+
+        a, b = data.min(), data.max()
+        mean = (a + b) / 2
+        std = (b - a) / 2
+
+        data = (data - mean) / (std + self.eps)
+        results['data'] = data
+
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+
+@PIPELINES.register_module
+class NormalizeInstance(object):
+
+    def __init__(self, eps=0.):
+        self.eps = eps
+
+    def __call__(self, results):
+        data = results['data']
+
+        mean = data.mean()
+        std = data.std()
+
+        data = (data - mean) / (std + self.eps)
+        results['data'] = data
+
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+
+@PIPELINES.register_module
+class Pad(object):
+
+    def __init__(self, size_divisor=32, fill_value=0):
+        self.size_divisor = size_divisor
+        self.fill_value = fill_value
+
+    def __call__(self, results):
+        data = results['data']
+
+        new_shape = tuple(int(np.ceil(v / self.size_divisor)) * self.size_divisor for v in data.shape)
+        pad_data = np.empty(new_shape, dtype=data.dtype)
+        pad_data[...] = self.fill_value
+
+        pad_data[:data.shape[0], :data.shape[1], ...] = data
+        results['data'] = pad_data
+        results['pad_shape'] = pad_data.shape
+
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(size_divisor={}, fill_value={})'.format(self.size_divisor, self.fill_value)
