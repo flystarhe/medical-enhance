@@ -1,5 +1,5 @@
 import numpy as np
-from .registry import PIPELINES
+from ..registry import PIPELINES
 
 '''
 sitk image: (width, height, depth)

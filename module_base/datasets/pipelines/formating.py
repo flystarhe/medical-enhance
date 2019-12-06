@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from .registry import PIPELINES
+from ..registry import PIPELINES
 
 
 def to_tensor(data):

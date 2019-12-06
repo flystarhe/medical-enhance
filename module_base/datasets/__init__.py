@@ -1,4 +1,3 @@
-from .compose import Compose
-from .registry import DATASETS, PIPELINES
+from .registry import DATASETS
 
-__all__ = ['Compose', 'DATASETS', 'PIPELINES']
+__all__ = ['DATASETS']

@@ -1,7 +1,7 @@
 import os.path as osp
 import SimpleITK as sitk
 import pycocotools.mask as maskUtils
-from .registry import PIPELINES
+from ..registry import PIPELINES
 
 '''
 pip install SimpleITK

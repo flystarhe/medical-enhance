@@ -1,5 +1,5 @@
 from utils import build_from_cfg
-from .registry import PIPELINES
+from ..registry import PIPELINES
 
 
 @PIPELINES.register_module
