@@ -66,7 +66,7 @@ class ImageToTensor(object):
 @PIPELINES.register_module
 class Collect(object):
 
-    def __init__(self, keys, meta_keys=('filename', 'ori_shape')):
+    def __init__(self, keys, meta_keys=('filename', 'ori_shape', 'norm_cfg')):
         self.keys = keys
         self.meta_keys = meta_keys
 
