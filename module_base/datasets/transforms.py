@@ -18,6 +18,49 @@ def pad2d(data, shape, fill_value):
 
 
 @PIPELINES.register_module
+class NormalizeCustomize(object):
+
+    def __init__(self, eps=0.):
+        self.eps = eps
+
+    def __call__(self, results):
+        input_data = results['input']
+
+        a, b = input_data.min(), input_data.max()
+        mean = (a + b) / 2
+        std = (b - a) / 2
+
+        input_data = (input_data - mean) / (std + self.eps)
+        results['input'] = input_data
+
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+
+@PIPELINES.register_module
+class NormalizeInstance(object):
+
+    def __init__(self, eps=0.):
+        self.eps = eps
+
+    def __call__(self, results):
+        input_data = results['input']
+
+        mean = input_data.mean()
+        std = input_data.std()
+
+        input_data = (input_data - mean) / (std + self.eps)
+        results['input'] = input_data
+
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+
+@PIPELINES.register_module
 class RandomCrop(object):
 
     def __init__(self, crop_size):
@@ -60,49 +103,6 @@ class RandomCrop(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(crop_size={})'.format(self.crop_size)
-
-
-@PIPELINES.register_module
-class NormalizeCustomize(object):
-
-    def __init__(self, eps=0.):
-        self.eps = eps
-
-    def __call__(self, results):
-        input_data = results['input']
-
-        a, b = input_data.min(), input_data.max()
-        mean = (a + b) / 2
-        std = (b - a) / 2
-
-        input_data = (input_data - mean) / (std + self.eps)
-        results['input'] = input_data
-
-        return results
-
-    def __repr__(self):
-        return self.__class__.__name__ + '()'
-
-
-@PIPELINES.register_module
-class NormalizeInstance(object):
-
-    def __init__(self, eps=0.):
-        self.eps = eps
-
-    def __call__(self, results):
-        input_data = results['input']
-
-        mean = input_data.mean()
-        std = input_data.std()
-
-        input_data = (input_data - mean) / (std + self.eps)
-        results['input'] = input_data
-
-        return results
-
-    def __repr__(self):
-        return self.__class__.__name__ + '()'
 
 
 @PIPELINES.register_module

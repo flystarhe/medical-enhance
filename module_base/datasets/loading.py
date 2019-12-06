@@ -64,7 +64,7 @@ class LoadAnnotations(object):
         return mask
 
     def _load_masks(self, results):
-        h, w = results['img_info']['height'], results['img_info']['width']
+        h, w = results['ori_shape']
         gt_masks = results['ann_info']['masks']
 
         if self.poly2mask:
