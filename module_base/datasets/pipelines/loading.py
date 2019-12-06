@@ -19,9 +19,9 @@ class LoadDicomFromFile(object):
 
     def __call__(self, results):
         if results['data_root'] is not None:
-            filename = osp.join(results['data_root'], results['filename'])
+            filename = osp.join(results['data_root'], results['img_info']['filename'])
         else:
-            filename = results['filename']
+            filename = results['img_info']['filename']
 
         itk_img = sitk.ReadImage(filename, sitk.sitkFloat32)
         input_data = sitk.GetArrayFromImage(itk_img)[0]  # (height, width)
