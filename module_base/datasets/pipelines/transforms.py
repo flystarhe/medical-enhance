@@ -32,6 +32,7 @@ class NormalizeCustomize(object):
 
         input_data = (input_data - mean) / (std + self.eps)
         results['input'] = input_data
+        results['norm_cfg'] = dict(mean=mean, std=std)
 
         return results
 
@@ -53,6 +54,7 @@ class NormalizeInstance(object):
 
         input_data = (input_data - mean) / (std + self.eps)
         results['input'] = input_data
+        results['norm_cfg'] = dict(mean=mean, std=std)
 
         return results
 
