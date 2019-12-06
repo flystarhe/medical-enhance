@@ -9,6 +9,14 @@ torch tensor shape: (channel, height, width)
 '''
 
 
+def pad2d(data, shape, fill_value):
+    padded_data = np.empty(shape, dtype=data.dtype)
+
+    padded_data[...] = fill_value
+    padded_data[:data.shape[0], :data.shape[1]] = data
+    return padded_data
+
+
 @PIPELINES.register_module
 class RandomCrop(object):
 
@@ -29,8 +37,8 @@ class RandomCrop(object):
         results['ori_shape'] = input_data.shape
 
         # adjust boxes
-        if 'boxes' in results:
-            boxes = results['boxes']
+        if 'gt_boxes' in results:
+            boxes = results['gt_boxes']
             boxes[:, 2:] = boxes[:, 2:].clip(max=patch[2:])
             boxes[:, :2] = boxes[:, :2].clip(min=patch[:2])
             boxes -= np.tile(patch[:2], 2)
@@ -39,13 +47,13 @@ class RandomCrop(object):
             if not np.any(valid_inds):
                 return None
 
-            results['boxes'] = boxes[valid_inds, :]
+            results['gt_boxes'] = boxes[valid_inds, :]
 
         # adjust masks
-        if 'masks' in results:
+        if 'gt_masks' in results:
             valid_masks = []
             for i in np.where(valid_inds)[0]:
-                valid_masks.append(results['masks'][i][patch[1]:patch[3], patch[0]:patch[2]])
+                valid_masks.append(results['gt_masks'][i][patch[1]:patch[3], patch[0]:patch[2]])
             results['gt_masks'] = valid_masks
 
         return results
@@ -107,13 +115,16 @@ class Pad(object):
     def __call__(self, results):
         input_data = results['input']
 
-        new_shape = tuple(int(np.ceil(v / self.size_divisor)) * self.size_divisor for v in input_data.shape)
-        pad_data = np.empty(new_shape, dtype=input_data.dtype)
-        pad_data[...] = self.fill_value
+        pad_shape = tuple(int(np.ceil(v / self.size_divisor)) * self.size_divisor for v in input_data.shape)
+        padded_data = pad2d(input_data, pad_shape, self.fill_value)
+        results['input'] = padded_data
+        results['pad_shape'] = padded_data.shape
 
-        pad_data[:input_data.shape[0], :input_data.shape[1]] = input_data
-        results['input'] = pad_data
-        results['pad_shape'] = pad_data.shape
+        # adjust masks
+        if 'gt_masks' in results:
+            pad_shape = results['pad_shape']
+            padded_masks = [pad2d(mask, pad_shape, 0) for mask in results['gt_masks']]
+            results['gt_masks'] = np.stack(padded_masks, axis=0)
 
         return results
 
