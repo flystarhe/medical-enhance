@@ -8,7 +8,7 @@ git clone --recurse-submodules --depth 1 xxx
 
 >基础环境：CUDA10.0、GCC7.3、Anaconda(py36)、OpenCV和PyTorch。
 
-## python *.py
+## python
 ```bash
 cd $PROJ_HOME
 PYTHONPATH=`pwd`/module_mmdetection python *.py
