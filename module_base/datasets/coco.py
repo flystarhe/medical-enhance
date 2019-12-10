@@ -48,8 +48,8 @@ class CocoDataset(object):
         gt_boxes = []
         gt_masks_ann = []
         for ann in ann_info:
-            x1, y1, w, h = ann['bbox']
-            gt_boxes.append([x1, y1, x1 + w - 1, y1 + h - 1])
+            x, y, w, h = ann['bbox']
+            gt_boxes.append([x, y, x + w - 1, y + h - 1])
             gt_masks_ann.append(ann['segmentation'])
 
         if gt_boxes:
