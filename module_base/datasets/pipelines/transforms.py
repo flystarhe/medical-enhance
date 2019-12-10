@@ -91,9 +91,9 @@ class RandomCrop(object):
         for i in range(50):
             pass
 
-        crop_y = np.random.randint(0, input_data.shape[0] - self.crop_size + 1)
-        crop_x = np.random.randint(0, input_data.shape[1] - self.crop_size + 1)
-        patch = np.array([crop_x, crop_y, crop_x + self.crop_size, crop_y + self.crop_size])
+        y = np.random.randint(0, input_data.shape[0] - self.crop_size + 1)
+        x = np.random.randint(0, input_data.shape[1] - self.crop_size + 1)
+        patch = np.array([x, y, x + self.crop_size, y + self.crop_size])
 
         # crop the image
         input_data = input_data[patch[1]:patch[3], patch[0]:patch[2]]
@@ -153,6 +153,12 @@ class Pad(object):
         return self.__class__.__name__ + '(size_divisor={}, fill_value={})'.format(self.size_divisor, self.fill_value)
 
 
+@PIPELINES.register_module
+class BuildFromBoxes(object):
+    pass
+
+
+@PIPELINES.register_module
 class TargetFromRepair(object):
 
     def __init__(self, block_range=(16, 32), fill_value=0):
@@ -178,6 +184,7 @@ class TargetFromRepair(object):
         return self.__class__.__name__ + '(block_range={}, fill_value={})'.format(self.block_range, self.fill_value)
 
 
+@PIPELINES.register_module
 class TargetFromMotion(object):
 
     def __init__(self, invariant_prob=0.1, degree=(10, 20)):
