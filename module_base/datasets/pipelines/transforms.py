@@ -1,3 +1,5 @@
+import random
+import cv2 as cv
 import numpy as np
 from ..registry import PIPELINES
 
@@ -25,14 +27,22 @@ class NormalizeCustomize(object):
 
     def __call__(self, results):
         input_data = results['input']
-
         a, b = input_data.min(), input_data.max()
-        mean = (a + b) / 2
-        std = (b - a) / 2
 
+        mean, std = (a + b) / 2, (b - a) / 2
         input_data = (input_data - mean) / (std + self.eps)
+
         results['input'] = input_data
         results['norm_cfg'] = dict(mean=mean, std=std)
+
+        if 'target' in results:
+            target_data = results['target']
+            a, b = target_data.min(), target_data.max()
+
+            mean, std = (a + b) / 2, (b - a) / 2
+            target_data = (target_data - mean) / (std + self.eps)
+
+            results['target'] = target_data
 
         return results
 
@@ -48,13 +58,18 @@ class NormalizeInstance(object):
 
     def __call__(self, results):
         input_data = results['input']
-
-        mean = input_data.mean()
-        std = input_data.std()
-
+        mean, std = input_data.mean(), input_data.std()
         input_data = (input_data - mean) / (std + self.eps)
+
         results['input'] = input_data
         results['norm_cfg'] = dict(mean=mean, std=std)
+
+        if 'target' in results:
+            target_data = results['target']
+            mean, std = target_data.mean(), target_data.std()
+            target_data = (target_data - mean) / (std + self.eps)
+
+            results['target'] = target_data
 
         return results
 
@@ -72,6 +87,10 @@ class RandomCrop(object):
         input_data = results['input']
 
         assert 0 < self.crop_size <= min(input_data.shape)
+
+        for i in range(50):
+            pass
+
         crop_y = np.random.randint(0, input_data.shape[0] - self.crop_size + 1)
         crop_x = np.random.randint(0, input_data.shape[1] - self.crop_size + 1)
         patch = np.array([crop_x, crop_y, crop_x + self.crop_size, crop_y + self.crop_size])
@@ -89,7 +108,7 @@ class RandomCrop(object):
             boxes -= np.tile(patch[:2], 2)
 
             valid_inds = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
-            if not np.any(valid_inds):
+            if np.any(valid_inds):
                 return None
 
             results['gt_boxes'] = boxes[valid_inds, :]
@@ -132,3 +151,60 @@ class Pad(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(size_divisor={}, fill_value={})'.format(self.size_divisor, self.fill_value)
+
+
+class TargetFromRepair(object):
+
+    def __init__(self, block_range=(16, 32), fill_value=0):
+        self.block_range = block_range
+        self.fill_value = fill_value
+
+    def __call__(self, results):
+        input_data = results['input']
+        target_data = input_data.copy()
+
+        y = input_data.shape[0] // 2
+        x = input_data.shape[1] // 2
+        h = np.random.randint(*self.block_range)
+        w = np.random.randint(*self.block_range)
+        input_data[y:y + h, x:x + w] = self.fill_value
+
+        results['input'] = input_data
+        results['target'] = target_data
+
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(block_range={}, fill_value={})'.format(self.block_range, self.fill_value)
+
+
+class TargetFromMotion(object):
+
+    def __init__(self, invariant_prob=0.1, degree=(10, 20)):
+        self.invariant_prob = invariant_prob
+        self.degree = degree
+
+    def __call__(self, results):
+        input_data = results['input']
+        target_data = input_data.copy()
+
+        if random.random() >= self.invariant_prob:
+            angle = np.random.randint(0, 360)
+            degree = np.random.randint(*self.degree)
+
+            # 模糊kernel，degree越大，越模糊
+            kernel = np.diag(np.ones(degree))
+            M = cv.getRotationMatrix2D((degree / 2, degree / 2), angle, 1)
+            kernel = cv.warpAffine(kernel, M, (degree, degree))
+            kernel = kernel / degree
+
+            input_data = cv.filter2D(input_data, -1, kernel)
+            cv.normalize(input_data, input_data, target_data.min(), target_data.max(), cv.NORM_MINMAX)
+
+        results['input'] = input_data
+        results['target'] = target_data
+
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(invariant_prob={}, degree={})'.format(self.invariant_prob, self.degree)
