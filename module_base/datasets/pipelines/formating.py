@@ -11,9 +11,9 @@ def to_tensor(data):
     elif isinstance(data, (list, tuple)):
         return torch.tensor(data)
     elif isinstance(data, int):
-        return torch.LongTensor([data])
+        return torch.tensor([data])
     elif isinstance(data, float):
-        return torch.FloatTensor([data])
+        return torch.tensor([data])
     else:
         raise TypeError('type {} cannot be converted to tensor.'.format(type(data)))
 
@@ -71,10 +71,12 @@ class Collect(object):
         self.meta_keys = meta_keys
 
     def __call__(self, results):
+        data = {}
         data_meta = {}
         for key in self.meta_keys:
             data_meta[key] = results[key]
-        data = dict(meta=data_meta)
+        data_meta.setdefault('cpu_only', True)
+        data['data_meta'] = data_meta
         for key in self.keys:
             data[key] = results[key]
         return results
