@@ -85,42 +85,42 @@ class RandomCrop(object):
 
     def __call__(self, results):
         input_data = results['input']
-
         assert 0 < self.crop_size <= min(input_data.shape)
 
-        for i in range(50):
-            pass
+        for i in range(30):
+            y = np.random.randint(0, input_data.shape[0] - self.crop_size + 1)
+            x = np.random.randint(0, input_data.shape[1] - self.crop_size + 1)
+            patch = np.array([x, y, x + self.crop_size, y + self.crop_size])
 
-        y = np.random.randint(0, input_data.shape[0] - self.crop_size + 1)
-        x = np.random.randint(0, input_data.shape[1] - self.crop_size + 1)
-        patch = np.array([x, y, x + self.crop_size, y + self.crop_size])
+            # adjust boxes
+            valid_inds = None
+            if 'gt_boxes' in results:
+                boxes = results['gt_boxes']
+                boxes[:, 2:] = boxes[:, 2:].clip(max=patch[2:])
+                boxes[:, :2] = boxes[:, :2].clip(min=patch[:2])
+                boxes -= np.tile(patch[:2], 2)
 
-        # crop the image
-        input_data = input_data[patch[1]:patch[3], patch[0]:patch[2]]
-        results['input'] = input_data
-        results['ori_shape'] = input_data.shape
+                valid_inds = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
+                if np.any(valid_inds):
+                    continue
 
-        # adjust boxes
-        if 'gt_boxes' in results:
-            boxes = results['gt_boxes']
-            boxes[:, 2:] = boxes[:, 2:].clip(max=patch[2:])
-            boxes[:, :2] = boxes[:, :2].clip(min=patch[:2])
-            boxes -= np.tile(patch[:2], 2)
+                results['gt_boxes'] = boxes[valid_inds, :]
 
-            valid_inds = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
-            if np.any(valid_inds):
-                return None
+            # adjust masks
+            if 'gt_masks' in results and valid_inds is not None:
+                valid_masks = []
+                for i in np.where(valid_inds)[0]:
+                    valid_masks.append(results['gt_masks'][i][patch[1]:patch[3], patch[0]:patch[2]])
+                results['gt_masks'] = valid_masks
 
-            results['gt_boxes'] = boxes[valid_inds, :]
+            # crop the image
+            input_data = input_data[patch[1]:patch[3], patch[0]:patch[2]]
 
-        # adjust masks
-        if 'gt_masks' in results:
-            valid_masks = []
-            for i in np.where(valid_inds)[0]:
-                valid_masks.append(results['gt_masks'][i][patch[1]:patch[3], patch[0]:patch[2]])
-            results['gt_masks'] = valid_masks
+            results['input'] = input_data
+            results['ori_shape'] = input_data.shape
 
-        return results
+            return results
+        return None
 
     def __repr__(self):
         return self.__class__.__name__ + '(crop_size={})'.format(self.crop_size)
