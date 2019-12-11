@@ -107,13 +107,17 @@ class RandomCrop(object):
                 results['gt_boxes'] = boxes[valid_inds, :]
 
             # adjust masks
-            if 'gt_masks' in results and valid_inds is not None:
+            if 'gt_masks' in results:
                 valid_masks = []
                 for i in np.where(valid_inds)[0]:
                     valid_masks.append(results['gt_masks'][i][patch[1]:patch[3], patch[0]:patch[2]])
                 results['gt_masks'] = valid_masks
 
-            # crop the image
+            # adjust target
+            if 'target' in results:
+                target_data = results['target'][patch[1]:patch[3], patch[0]:patch[2]]
+                results['target'] = target_data
+
             input_data = input_data[patch[1]:patch[3], patch[0]:patch[2]]
 
             results['input'] = input_data
@@ -137,15 +141,20 @@ class Pad(object):
         input_data = results['input']
 
         pad_shape = tuple(int(np.ceil(v / self.size_divisor)) * self.size_divisor for v in input_data.shape)
+
         padded_data = pad2d(input_data, pad_shape, self.fill_value)
         results['input'] = padded_data
         results['pad_shape'] = padded_data.shape
 
         # adjust masks
         if 'gt_masks' in results:
-            pad_shape = results['pad_shape']
             padded_masks = [pad2d(mask, pad_shape, 0) for mask in results['gt_masks']]
             results['gt_masks'] = np.stack(padded_masks, axis=0)
+
+        # adjust target
+        if 'target' in results:
+            padded_data = pad2d(results['target'], pad_shape, self.fill_value)
+            results['target'] = padded_data
 
         return results
 
