@@ -83,4 +83,4 @@ class LoadAnnotations(object):
         return results
 
     def __repr__(self):
-        return self.__class__.__name__
+        return self.__class__.__name__ + '(with_bbox={}, with_mask={})'.format(self.with_bbox, self.with_mask)
