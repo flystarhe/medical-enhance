@@ -80,8 +80,9 @@ class NormalizeInstance(object):
 @PIPELINES.register_module
 class RandomCrop(object):
 
-    def __init__(self, crop_size):
+    def __init__(self, crop_size, to_clear=True):
         self.crop_size = crop_size
+        self.to_clear = to_clear
 
     def __call__(self, results):
         input_data = results['input']
@@ -93,7 +94,6 @@ class RandomCrop(object):
             patch = np.array([x, y, x + self.crop_size, y + self.crop_size])
 
             # adjust boxes
-            valid_inds = None
             if 'gt_boxes' in results:
                 boxes = results['gt_boxes']
                 boxes[:, 2:] = boxes[:, 2:].clip(max=patch[2:])
@@ -101,16 +101,15 @@ class RandomCrop(object):
                 boxes -= np.tile(patch[:2], 2)
 
                 valid_inds = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
-                if np.any(valid_inds):
+                if self.to_clear and np.any(valid_inds):
                     continue
 
                 results['gt_boxes'] = boxes[valid_inds, :]
 
             # adjust masks
             if 'gt_masks' in results:
-                valid_masks = []
-                for i in np.where(valid_inds)[0]:
-                    valid_masks.append(results['gt_masks'][i][patch[1]:patch[3], patch[0]:patch[2]])
+                valid_masks = [mask[patch[1]:patch[3], patch[0]:patch[2]] for mask in results['gt_masks']]
+                valid_masks = [mask for mask in valid_masks if mask.sum() > 1]
                 results['gt_masks'] = valid_masks
 
             # adjust target
@@ -127,7 +126,7 @@ class RandomCrop(object):
         return None
 
     def __repr__(self):
-        return self.__class__.__name__ + '(crop_size={})'.format(self.crop_size)
+        return self.__class__.__name__ + '(crop_size={}, to_clear={})'.format(self.crop_size, self.to_clear)
 
 
 @PIPELINES.register_module
