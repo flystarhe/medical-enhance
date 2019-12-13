@@ -109,6 +109,7 @@ class RandomCrop(object):
             # adjust masks
             if 'gt_masks' in results:
                 valid_masks = [mask[patch[1]:patch[3], patch[0]:patch[2]] for mask in results['gt_masks']]
+                valid_masks = [mask for mask in valid_masks if mask.sum() > 1]
                 results['gt_masks'] = valid_masks
 
             # adjust target
@@ -125,7 +126,7 @@ class RandomCrop(object):
         return None
 
     def __repr__(self):
-        return self.__class__.__name__ + '(crop_size={})'.format(self.crop_size)
+        return self.__class__.__name__ + '(crop_size={}, to_clear={})'.format(self.crop_size, self.to_clear)
 
 
 @PIPELINES.register_module
