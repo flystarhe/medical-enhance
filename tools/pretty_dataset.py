@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import shutil
 from pathlib import Path
 import SimpleITK as sitk
@@ -37,9 +38,10 @@ def copy_files(file_list, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     for file_path in file_list:
         if file_path[-4:] != '.dcm':
-            filename = os.path.basename(file_path)
-            output_dir = os.path.join(output_dir, filename + '.dcm')
-        shutil.copy(file_path, output_dir)
+            filename = os.path.basename(file_path) + '.dcm'
+            shutil.copy(file_path, os.path.join(output_dir, filename))
+        else:
+            shutil.copy(file_path, output_dir)
 
 
 def split_dir(input_dir, output_dir):
@@ -62,4 +64,4 @@ def split_dir(input_dir, output_dir):
 
 
 if __name__ == '__main__':
-    print(split_dir(sys.argv[1], sys.argv[2]))
+    print(json.dumps(split_dir(sys.argv[1], sys.argv[2]), indent=4))
