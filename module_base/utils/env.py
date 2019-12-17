@@ -18,6 +18,7 @@ class Cache(object):
         data = [(k, np.mean(self.data[k])) for k in sorted(self.data.keys())]
         message = ['{}:{:.6f}'.format(k, v) for k, v in data]
         message = '{}/{}'.format(num, ','.join(message))
+        self.data = defaultdict(list)
         return message
 
 
@@ -28,7 +29,7 @@ def get_root_logger(log_dir, level=logging.INFO):
         logging.basicConfig(format=fmt, level=level)
 
         os.makedirs(log_dir, exist_ok=True)
-        filename = time.strftime('%Y%m%d.%H%M%S')
+        filename = time.strftime('%m%d.%H%M%S')
         log_file = os.path.join(log_dir, filename)
         file_handler = logging.FileHandler(log_file, 'w')
         file_handler.setFormatter(logging.Formatter(fmt))
