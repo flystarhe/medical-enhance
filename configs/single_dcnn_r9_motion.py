@@ -5,7 +5,7 @@ model = dict(
     in_channels=1,
     out_channels=256,
     padding_type='reflect',
-    drop_prob=0.0
+    upsampling='bilinear',
 )
 # model training and testing settings
 train_cfg = dict()
