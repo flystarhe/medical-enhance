@@ -15,7 +15,7 @@ class Cache(object):
             self.data[k].append(v)
 
     def summary(self, num):
-        data = [(k, np.mean(self.data[k])) for k in sorted(self.data.keys())]
+        data = [(k, np.mean(self.data[k])) for k in sorted(self.data)]
         message = ['{}:{:.6f}'.format(k, v) for k, v in data]
         message = '{}/{}'.format(num, ','.join(message))
         self.data = defaultdict(list)
