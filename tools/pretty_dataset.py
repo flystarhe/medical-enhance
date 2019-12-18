@@ -60,8 +60,12 @@ def split_dir(input_dir, output_dir):
             sub_dir = '_'.join(meta_data_from_file(dcm_list[0]))
             copy_files(dcm_list, os.path.join(output_dir, sub_dir, series_id))
             counts[sub_dir] += 1
-    return counts
+
+    msg = ['# ReadMe', '', '## counts', json.dumps(counts, indent=4)]
+    with open(os.path.join(output_dir, 'readme.md')) as f:
+        f.write('\n'.join(msg))
+    print('\n'.join(msg))
 
 
 if __name__ == '__main__':
-    print(json.dumps(split_dir(sys.argv[1], sys.argv[2]), indent=4))
+    split_dir(sys.argv[1], sys.argv[2])
