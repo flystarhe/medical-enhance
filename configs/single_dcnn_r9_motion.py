@@ -1,11 +1,13 @@
 # model settings
 model = dict(
-    type='ResNet',
-    depth=9,
-    in_channels=1,
-    out_channels=256,
-    padding_type='reflect',
-    upsampling='bilinear',
+    type='DCNN',
+    net=dict(
+        type='ResNet',
+        depth=9,
+        in_channels=1,
+        out_channels=256,
+        padding_type='reflect',
+        upsampling='bilinear'),
 )
 # model training and testing settings
 train_cfg = dict()
