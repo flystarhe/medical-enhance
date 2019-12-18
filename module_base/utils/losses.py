@@ -34,6 +34,11 @@ def loss_hinge_gen(dis_fake):
 
 
 # Perceptual Similarity
+# http://arxiv.org/abs/1801.03924
+# https://github.com/richzhang/PerceptualSimilarity/blob/master/models/__init__.py
+# https://github.com/richzhang/PerceptualSimilarity/blob/master/models/dist_model.py
+# https://github.com/richzhang/PerceptualSimilarity/blob/master/models/pretrained_networks.py
+
 
 class VGGFeatureExtractor(nn.Module):
     def __init__(self):
