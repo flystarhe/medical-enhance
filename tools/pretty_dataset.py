@@ -62,7 +62,7 @@ def split_dir(input_dir, output_dir):
             counts[sub_dir] += 1
 
     msg = ['# ReadMe', '', '## counts', json.dumps(counts, indent=4)]
-    with open(os.path.join(output_dir, 'readme.md')) as f:
+    with open(os.path.join(output_dir, 'readme.md'), 'w') as f:
         f.write('\n'.join(msg))
     print('\n'.join(msg))
 
