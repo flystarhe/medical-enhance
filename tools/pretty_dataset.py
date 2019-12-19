@@ -7,12 +7,17 @@ import SimpleITK as sitk
 from collections import defaultdict
 
 '''
+https://www.dicomstandard.org/current/
+- DICOM Part 6: Data Dictionary
+
 0008|0060 - Modality(MRI/CT/CR/DR)
 0008|0070 - Manufacturer
 0018|0015 - Body Part Examined
+0008|1030 - Study Description
+0010|0020 - Patient ID
 '''
 
-G_TAGS = ['0008|0060', '0008|0070', '0018|0015']
+G_TAGS = ['0008|0060', '0008|0070', '0018|0015', '0008|1030']
 
 
 def get_series_ids(data_dir):
@@ -27,11 +32,16 @@ def get_series_files(data_dir, series_id):
     return series_files
 
 
-def meta_data_from_file(dcm_path):
-    file_reader = sitk.ImageFileReader()
-    file_reader.SetFileName(dcm_path)
-    file_reader.ReadImageInformation()
-    return [file_reader.GetMetaData(tag).strip() for tag in G_TAGS]
+def meta_data_from_file(dicom_path, tags=None):
+    reader = sitk.ImageFileReader()
+    reader.SetFileName(dicom_path)
+    reader.ReadImageInformation()
+
+    if tags is None:
+        tags = G_TAGS
+
+    vals = [reader.GetMetaData(tag) for tag in tags if reader.HasMetaDataKey(tag)]
+    return [v.split()[0].upper() for v in vals]
 
 
 def copy_files(file_list, output_dir):
@@ -50,18 +60,27 @@ def split_dir(input_dir, output_dir):
 
     shutil.rmtree(output_dir, ignore_errors=True)
 
-    counts = defaultdict(int)
+    counts = defaultdict(dict)
+    patients = defaultdict(set)
     for data_dir in sorted(cache):
         for series_id in get_series_ids(data_dir):
-            dcm_list = get_series_files(data_dir, series_id)
-            if len(dcm_list) < 3:
+            dicom_list = get_series_files(data_dir, series_id)
+
+            if len(dicom_list) < 3:
                 continue
 
-            sub_dir = '_'.join(meta_data_from_file(dcm_list[0]))
-            copy_files(dcm_list, os.path.join(output_dir, sub_dir, series_id))
-            counts[sub_dir] += 1
+            sub_dir = '_'.join(meta_data_from_file(dicom_list[0])[:3])
+            patient_id = meta_data_from_file(dicom_list[0], ['0010|0020'])[0]
+            copy_files(dicom_list, os.path.join(output_dir, sub_dir, series_id))
 
-    msg = ['# ReadMe', '', '## counts', json.dumps(counts, indent=4)]
+            counts[sub_dir]['images'] = counts[sub_dir].get('images', 0) + len(dicom_list)
+            counts[sub_dir]['series'] = counts[sub_dir].get('series', 0) + 1
+            patients[sub_dir].add(patient_id)
+
+    for sub_dir, patient_ids in patients.items():
+        counts[sub_dir]['patients'] = len(patient_ids)
+
+    msg = ['# ReadMe', '', '## counts', json.dumps(counts, indent=4, sort_keys=True)]
     with open(os.path.join(output_dir, 'readme.md'), 'w') as f:
         f.write('\n'.join(msg))
     print('\n'.join(msg))
